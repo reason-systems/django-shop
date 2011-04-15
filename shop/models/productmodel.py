@@ -34,34 +34,15 @@ class ProductMetaClass(ModelBase):
             pre_save.connect(super_klass.save_subtype_name, sender=super_klass, weak=False)
             return super_klass
 
-class Product(models.Model):
-    """
-    A basic product for the shop
-    Most of the already existing fields here should be generic enough to reside
-    on the "base model" and not on an added property
-    """
-    
+class BaseProduct(models.Model):
+    """Bare product logic with no fields"""
+
     __metaclass__ = ProductMetaClass
-    
-    name = models.CharField(max_length=255)
-    slug = models.SlugField()
-    short_description = models.CharField(max_length=255)
-    long_description = models.TextField()
-    active = models.BooleanField(default=False)
-    
-    date_added = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
-    
-    unit_price = CurrencyField()
-    
-    # The subtype stores the lowest-level classname in the inheritence tree
-    subtype = models.CharField(max_length=255, editable=False)
-    
     objects = ProductManager()
-    
+
     class Meta:
-        app_label = 'shop'
-    
+        abstract = True
+
     def __unicode__(self):
         return self.name
     
@@ -99,5 +80,28 @@ class Product(models.Model):
         This method is (and should) only called from the pre_save signal set
         in ProductMetaClass
         """
-        instance.subtype = cls.__name__.lower()
+        instance.subtype = cls.__name__.lower()    
 
+class Product(BaseProduct):
+    """
+    A basic product for the shop
+    Most of the already existing fields here should be generic enough to reside
+    on the "base model" and not on an added property
+    """
+    name = models.CharField(max_length=255)
+    slug = models.SlugField()
+    short_description = models.CharField(max_length=255)
+    long_description = models.TextField()
+    active = models.BooleanField(default=False)
+
+    date_added = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    unit_price = CurrencyField()
+    
+    # The subtype stores the lowest-level classname in the inheritence tree
+    subtype = models.CharField(max_length=255, editable=False)
+    
+    class Meta:
+        app_label = 'shop'
+    
